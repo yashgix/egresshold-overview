@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>egresshold</title><meta name="description" content="A fail-closed check on what a coding-agent client uploads, for secrets and personal details."><style>
+:root{color-scheme:light;--paper:#ffffff;--band:#f5f2ff;--ink:#1b1740;--muted:#585580;--line:#e2dcff;--accent:#6a3cff;--accent-soft:#ece6ff;
+--good:#0a8f5a;--good-soft:#d6f7e8;--bad:#d62f3a;--bad-soft:#ffe1e3;--code:#eee9ff;--bar:#b4a4ff;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:linear-gradient(180deg,#ece5ff 0,#e6f4ff 300px,#fff 520px) no-repeat var(--paper);color:var(--ink);font:17px/1.62 var(--sans)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}.narrow{max-width:760px}
+header{padding:64px 0 28px}.eyebrow{font:600 13px/1.4 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-size:clamp(34px,5.6vw,54px);line-height:1.06;letter-spacing:-.025em;margin:0 0 18px;max-width:18em}
+.lede{font-size:clamp(18px,2.2vw,21px);line-height:1.5;color:var(--muted);max-width:40em;margin:0}
+.notice{display:inline-block;margin-top:20px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;color:var(--muted);background:var(--band)}
+.tabbar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+[role=tablist]{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+[role=tab]{appearance:none;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);cursor:pointer;font:600 16px/1.3 var(--sans);padding:15px 16px 12px;white-space:nowrap}
+[role=tab]:hover{color:var(--ink)}[role=tab][aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+section{padding:46px 0;border-bottom:1px solid var(--line)}section:last-child{border-bottom:0}
+h2{font-size:clamp(25px,3.2vw,33px);line-height:1.16;letter-spacing:-.015em;margin:0 0 14px;max-width:24em}
+h3{font-size:18px;line-height:1.3;margin:0 0 6px}p{margin:0 0 14px;max-width:44em}.muted{color:var(--muted)}.small{font-size:14.5px}
+code{font:.88em var(--mono);background:var(--code);padding:.08em .3em;border-radius:4px;overflow-wrap:anywhere}
+ul{padding-left:21px;max-width:44em;margin:0}li{margin:7px 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:26px}
+.stats>div{padding:20px 20px 20px 0}.stats b{display:block;color:var(--accent);font-size:clamp(28px,3.6vw,38px);line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.stats span{display:block;margin-top:7px;color:var(--muted);font-size:14.5px;line-height:1.4}
+.demo{background:var(--band);border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:20px}
+.controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-bottom:14px}.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 13px;font:500 14px/1.3 var(--sans);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.budget{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}.budget input{width:150px;accent-color:var(--accent)}
+.cmd{font:13px/1.5 var(--mono);color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.cmd b{color:var(--ink);font-weight:600}
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
+.panel h3{font-size:15px;margin:0}.verdict{font-size:13.5px;font-weight:650;margin:3px 0 9px}.yes{color:var(--good)}.no{color:var(--bad)}
+pre{margin:0;background:var(--code);border-radius:6px;padding:11px;font:12.5px/1.55 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto}
+mark{background:var(--good-soft);color:inherit;font-weight:700;border-radius:2px;padding:0 1px}
+textarea{display:block;width:100%;min-height:110px;margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:12.5px/1.5 var(--mono);resize:vertical}
+.link{appearance:none;background:none;border:0;padding:0;color:var(--accent);font:600 14px/1.4 var(--sans);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.flow{display:flex;align-items:stretch;gap:0;margin:22px 0 8px}.step{flex:1;min-width:0;background:var(--band);border:1px solid var(--line);border-radius:8px;padding:13px}
+.step b{display:block;font-size:14.5px;line-height:1.3;margin-bottom:5px}.step span{display:block;font-size:13.5px;line-height:1.42;color:var(--muted)}.step.key{background:var(--accent-soft);border-color:var(--accent)}
+.arrow{flex:none;width:26px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:17px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 34px;margin-top:20px}.grid2 p{margin:0;font-size:16px;color:var(--muted)}
+.bars{margin-top:18px;max-width:780px}.barrow{display:grid;grid-template-columns:150px 1fr 104px;gap:10px;align-items:center;margin:7px 0;font-size:14.5px}.track{height:18px;background:var(--code);border-radius:3px;overflow:hidden}
+.fill{height:100%;background:var(--bar)}.fill.new{background:var(--accent)}.num{text-align:right;font-variant-numeric:tabular-nums}.bargroup{font-weight:650;margin:18px 0 3px;font-size:15px}
+.tablewrap{overflow-x:auto;margin-top:16px;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--band);font-weight:650;white-space:nowrap}tr:last-child td{border-bottom:0}
+.ci{margin-top:18px;max-width:780px}.cirow{display:grid;grid-template-columns:210px 1fr 130px;gap:12px;align-items:center;margin:11px 0;font-size:14.5px}.ciplot{position:relative;height:22px}
+.ciplot:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--line)}.zero{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--muted)}
+.range{position:absolute;top:calc(50% - 2px);height:4px;background:var(--accent);border-radius:2px}.dot{position:absolute;top:calc(50% - 6px);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--accent);border:2px solid var(--paper)}
+.axis{display:grid;grid-template-columns:210px 1fr 130px;gap:12px;font-size:12.5px;color:var(--muted)}.axis div:nth-child(2){display:flex;justify-content:space-between}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 15px;border-radius:0 6px 6px 0;margin:18px 0 0;max-width:46em;font-size:16px}
+.sim{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px}.cases{display:flex;flex-direction:column;gap:4px;max-height:430px;overflow:auto}
+.case{appearance:none;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:var(--ink);font:500 14px/1.3 var(--sans);cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.case[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.tag{flex:none;font-size:12px;font-weight:700}
+.outcomes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.outcome{border-radius:7px;padding:11px 12px;border:1px solid var(--line)}.outcome small{display:block;color:var(--muted);font-size:12.5px}.outcome b{font-size:17px}
+.outcome.up{background:var(--bad-soft)}.outcome.up b{color:var(--bad)}.outcome.block{background:var(--good-soft)}.outcome.block b{color:var(--good)}
+footer{padding:28px 0 46px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}a{color:var(--accent);text-underline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){body{font-size:16px}.wrap{padding:0 16px}header{padding:38px 0 20px}section{padding:34px 0}.stats,.compare,.grid2,.sim,.outcomes{grid-template-columns:1fr}.stats>div{padding:14px 0;border-bottom:1px solid var(--line)}.stats>div:last-child{border-bottom:0}
+.flow{flex-direction:column}.arrow{width:auto;height:22px;transform:rotate(90deg)}.barrow{grid-template-columns:96px 1fr 88px;gap:7px;font-size:13.5px}.cirow,.axis{grid-template-columns:1fr}.cirow{gap:3px;margin:15px 0}.axis div:first-child,.axis div:last-child{display:none}.demo{padding:12px}.cases{max-height:260px}[role=tab]{font-size:15px;padding:13px 10px 10px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style></head>
+<body><div class="wrap"><header><p class="eyebrow">egresshold</p><h1>Check what leaves the machine before it leaves</h1><p class="lede">A fail-closed boundary for coding-agent clients. Every outgoing upload is scanned for secrets and personal details, and an upload that cannot be checked is not sent.</p><p class="notice">Overview only. Reproduction steps, affected code paths and the full evidence are kept in a private repository.</p></header></div><div class="tabbar"><div class="wrap"><div role="tablist" aria-label="Sections"><button role="tab" id="tab-overview" aria-controls="overview" aria-selected="false" tabindex="-1">Overview</button><button role="tab" id="tab-details" aria-controls="details" aria-selected="false" tabindex="-1">Technical details</button></div></div></div><main><div id="overview" role="tabpanel" aria-labelledby="tab-overview" hidden><div class="wrap"><section><p class="eyebrow">The problem class</p><h2>Text can leave the machine before anything checks it</h2>
+<p>Coding-agent clients upload text that an agent wrote: notes, comments, searches. Agents quote what they have seen, including keys, tokens and personal details. A check that covers only some upload paths, or that quietly lets text through when it fails, leaves a gap. From reading the client's source, in the default mode the person does not review each upload, so they cannot catch it either. This was not tested.</p>
+<p>The service may check content on its side. That was not tested, because testing it would mean sending data to the service. The real exposure may therefore be smaller than the client alone suggests.</p>
+<div class="stats"><div><b>392 of 392</b><span>tests pass on Node 22 and 24</span></div><div><b>1 check</b><span>in front of every guarded upload path</span></div><div><b>359</b><span>fixtures where the port agrees with the reference scanner</span></div></div></section>
+<section><p class="eyebrow">Defensive approach</p><h2>Check at the one place everything leaves, and fail closed</h2>
+<ul><li><b>One choke point.</b> Every guarded upload already passes through one request function, so one check there covers all of them, including ones added later. Login and other non-upload requests are left alone.</li>
+<li><b>Fail closed.</b> If the scan errors, times out or cannot load its rules, nothing is sent. A delayed note can be recovered. A leaked key cannot.</li>
+<li><b>Reuse proven rules.</b> The scan ports the default rules of a widely used open-source secret scanner and checks the port against the real tool.</li>
+<li><b>Hold, do not retry.</b> A blocked queued item is kept locally and never retried, so it cannot delay the items behind it.</li></ul></section>
+<section><p class="eyebrow">What the boundary decides</p><h2>Sent or blocked, by kind of text</h2><p>Each row was measured with generated fake credentials against a local stand-in server. Nothing was sent to the real service. No payloads are shown here.</p>
+<div class="demo"><div class="sim"><div class="cases" id="privacy-cases" role="group" aria-label="Kinds of text"></div><div class="panel"><h3 id="case-title"></h3><p class="small muted" id="case-why" style="margin:4px 0 10px"></p><pre id="case-text" tabindex="0"></pre><div class="outcomes"><div class="outcome" id="today"><small>Without the boundary</small><b></b></div><div class="outcome" id="patched"><small>With the boundary</small><b></b></div></div></div></div></div></section>
+<section><p class="eyebrow">Limits</p><h2>The scanner is a floor, not a guarantee</h2><ul>
+<li>It misses text that is split, encoded in base64 or hex, stacked in an unsupported order, or written as a generic password in prose.</li>
+<li>No detection rate is claimed. A licensed real-world measurement has not been run.</li>
+<li>About 1.6% of 1,000 ordinary public posts were flagged. The flags were not adjudicated, so this is a flag rate and not a false-positive rate. A false positive blocks an upload.</li>
+<li>The service's own check, real agent notes and one importer path were not exercised end to end.</li></ul></section></div></div><div id="details" role="tabpanel" aria-labelledby="tab-details" hidden><div class="wrap"><section><p class="eyebrow">Architecture</p><h2>One fail-closed check in front of every guarded upload</h2><div class="flow"><div class="step"><b>Any guarded upload</b><span>Notes, comments, searches, votes</span></div><div class="arrow" aria-hidden="true">→</div><div class="step"><b>Request function</b><span>The one place all paths pass through</span></div><div class="arrow" aria-hidden="true">→</div><div class="step"><b>Bounded walk</b><span>Every value and key, within size and depth limits</span></div><div class="arrow" aria-hidden="true">→</div><div class="step key"><b>Worker scan, 3 s</b><span>Text and decoded views, rule set and client patterns</span></div><div class="arrow" aria-hidden="true">→</div><div class="step"><b>Send or hold</b><span>Any finding, error or timeout blocks the upload</span></div></div></section>
+<section><p class="eyebrow">Implementation decisions</p><h2>Why it works this way</h2><div class="grid2"><div><h3>Fail closed</h3><p>A scan error, timeout or bad rules file blocks the upload.</p></div><div><h3>Port, do not invent</h3><p>The default rules of the reference scanner are widely used, and a port can be tested against the real tool.</p></div><div><h3>Scan in a worker thread</h3><p>A slow regular expression cannot be interrupted on the main thread. A worker can be terminated at the deadline.</p></div><div><h3>Bound the walk first</h3><p>Size and depth limits run before the deadline, so a hostile or huge body cannot stall the check.</p></div><div><h3>Scan what actually leaves</h3><p>The check covers link parts, nested values, object keys, and percent-decoded and JSON-unescaped views.</p></div><div><h3>The uploader cannot opt out</h3><p>An allow marker inside the uploaded text does not switch the check off, because the uploader controls that text.</p></div><div><h3>Hold, do not retry</h3><p>A blocked queued item moves to a local folder, is listed in the status view, and never delays the items behind it.</p></div></div></section>
+<section><p class="eyebrow">Validation on synthetic data</p><h2>What was measured</h2><div class="tablewrap"><table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<tr><td>Tests</td><td><b>392 of 392</b> on Node 22.23.5 and 24.22.1</td></tr>
+<tr><td>Agreement with the reference scanner (8.30.1)</td><td>359 fixtures, no differences except one deliberate case</td></tr>
+<tr><td>Ordinary public posts flagged, shipped boundary</td><td>16 of 1,000 (1.6%). Reference rules alone: 2 of 1,000. Not adjudicated.</td></tr>
+<tr><td>Added time per note, busy machine</td><td>p50 20.4 ms, p95 34.3 ms, max 142.3 ms</td></tr>
+<tr><td>Patch rebuilds the reviewed client</td><td>Byte for byte, from the published package</td></tr></tbody></table></div>
+<p class="callout"><b>No detection rate is claimed.</b> Everything here uses generated fake credentials and public text. A licensed real-world measurement has not been run.</p></section>
+<section><p class="eyebrow">Limitations</p><h2>What this does not show</h2><ul>
+<li>The scanner is a floor. It does not catch split, base64 or hex forms, stacked encodings, or generic passwords in prose.</li>
+<li>The service's own check was not tested, so the real effect on users is unknown.</li>
+<li>The false-positive sample is public question-and-answer text, not real agent notes.</li>
+<li>One importer path's own synchronous check sits outside the 3-second deadline.</li>
+<li>A very long note is blocked when its scan passes 3 seconds or it exceeds 1 MB of text.</li>
+<li>Some differences from the reference scanner remain: no base64 or hex decoding, and quantifiers count UTF-16 units on emoji.</li></ul></section>
+<section><p class="eyebrow">Kept private</p><h2>What is deliberately not on this page</h2><p>Exact reproduction steps, the affected code paths, payload examples, implementation detail and the full evidence are in the private repository and a separate confidential technical handoff.</p></section></div></div></main><footer><div class="wrap">egresshold · Yash Gupta · <a href="https://github.com/yashgix">github.com/yashgix</a> · <a href="https://www.linkedin.com/in/yash-guptaix/">linkedin.com/in/yash-guptaix</a></div></footer>
+<script type="application/json" id="privacy-data">[["A credential in the note text", "A credential-shaped string written plainly in text the agent produced.", "up", "block", "The scan matches it with a widely used rule set."], ["A credential in a link or a nested field", "The same string placed in a link, a query part or an inner field of the request.", "up", "block", "The walk visits every value and key, not only the main text."], ["A percent-encoded credential", "The string is percent-encoded once or several times.", "up", "block", "The scan also reads a percent-decoded view, repeated up to three rounds."], ["A JSON-escaped credential", "The string is written with JSON escape sequences.", "up", "block", "The scan also reads a JSON-unescaped view."], ["A personal detail such as an email address", "An email-shaped string in the text.", "up", "block", "The client's own personal-data patterns run next to the rule set."], ["An ordinary sentence", "Plain prose with nothing sensitive in it.", "up", "up", "Clean text goes through unchanged."], ["A credential split across lines", "The string is broken over two lines.", "up", "up", "Known limit: a rule that matches one line cannot match it."], ["A credential in base64 or hex", "The string is encoded as base64 or hex.", "up", "up", "Known limit: those encodings are not decoded."], ["Encodings stacked in an unsupported order", "Percent encoding applied on top of a JSON escape.", "up", "up", "Known limit: that order is not decoded."], ["A password written in prose", "A generic password mentioned in a sentence.", "up", "up", "Known limit: there is no pattern for passwords in free text."]]</script><script>
+
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function setupTabs(views){const tabs=views.map(v=>document.getElementById('tab-'+v));
+function show(v,focus){views.forEach((x,i)=>{const on=x===v;tabs[i].setAttribute('aria-selected',on);tabs[i].tabIndex=on?0:-1;document.getElementById(x).hidden=!on});if(focus)tabs[views.indexOf(v)].focus();try{history.replaceState(null,'','#'+v)}catch(e){}}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>{show(views[i]);const bar=document.querySelector('.tabbar');if(window.scrollY>bar.offsetTop)window.scrollTo({top:bar.offsetTop})});t.addEventListener('keydown',e=>{const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();show(views[(i+d+views.length)%views.length],true)}})});
+show(views.includes(location.hash.slice(1))?location.hash.slice(1):views[0])}
+
+(function(){const cases=JSON.parse(document.getElementById('privacy-data').textContent),box=document.getElementById('privacy-cases'),$=id=>document.getElementById(id),label={up:'Sent',block:'Blocked'};
+function outcome(el,kind){el.className='outcome '+kind;el.querySelector('b').textContent=label[kind]}
+function select(i){[...box.children].forEach((b,j)=>b.setAttribute('aria-pressed',i===j));const [title,what,today,patched,why]=cases[i];$('case-title').textContent=title;$('case-why').textContent=why;$('case-text').textContent=what;outcome($('today'),today);outcome($('patched'),patched)}
+cases.forEach((c,i)=>{const b=document.createElement('button');b.className='case';b.innerHTML='<span>'+escapeHtml(c[0])+'</span><span class="tag '+(c[3]==='block'?'yes':'muted')+'">'+label[c[3]]+'</span>';b.addEventListener('click',()=>select(i));box.appendChild(b)});select(0)})();
+setupTabs(["overview", "details"]);</script></body></html>
